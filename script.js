@@ -191,7 +191,7 @@ class TaskManager {
       const taskId = btn.dataset.taskId;
       const handler = () => this.toggleComplete(taskId);
       btn.addEventListener('click', handler);
-      btn.addEventListener('touchstart', handler, { passive: true });
+      //btn.addEventListener('touchstart', handler, { passive: true });
     });
   }
 
