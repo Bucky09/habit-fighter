@@ -12,43 +12,34 @@ class TaskManager {
     this.renderTasks();
     this.renderManageTasks();
     this.checkReminders();
-    // Check reminders every minute
     setInterval(() => this.checkReminders(), 60000);
   }
 
   setupEventListeners() {
-    // Tab switching
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.addEventListener('click', (e) => this.switchTab(e.target.dataset.tab));
     });
 
-    // Filter buttons
     document.querySelectorAll('.filter-btn').forEach(btn => {
       btn.addEventListener('click', (e) => this.filterTasks(e.target.dataset.filter));
     });
 
-    // Add task button
     document.getElementById('add-task-btn').addEventListener('click', () => this.showTaskForm());
 
-    // Form submission
     document.getElementById('task-form-element').addEventListener('submit', (e) => this.handleFormSubmit(e));
 
-    // Cancel button
     document.getElementById('cancel-btn').addEventListener('click', () => this.hideTaskForm());
 
-    // Reminder checkbox
     document.getElementById('task-reminder').addEventListener('change', (e) => {
       document.getElementById('reminder-time-group').classList.toggle('hidden', !e.target.checked);
     });
   }
 
   switchTab(tabName) {
-    // Update tab buttons
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.tab === tabName);
     });
 
-    // Update tab content
     document.querySelectorAll('.tab-content').forEach(content => {
       content.classList.toggle('active', content.id === tabName);
     });
@@ -56,8 +47,6 @@ class TaskManager {
 
   filterTasks(filter) {
     this.currentFilter = filter;
-
-    // Update filter buttons
     document.querySelectorAll('.filter-btn').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.filter === filter);
     });
@@ -72,7 +61,6 @@ class TaskManager {
     form.classList.remove('hidden');
 
     if (task) {
-      // Edit mode
       this.editingTaskId = task.id;
       formTitle.textContent = 'Edit Task';
       document.getElementById('task-id').value = task.id;
@@ -86,7 +74,6 @@ class TaskManager {
         document.getElementById('task-reminder-time').value = task.reminderTime;
       }
     } else {
-      // Add mode
       this.editingTaskId = null;
       formTitle.textContent = 'Add New Task';
       document.getElementById('task-form-element').reset();
@@ -130,11 +117,9 @@ class TaskManager {
     };
 
     if (this.editingTaskId) {
-      // Update existing task
       const index = this.tasks.findIndex(t => t.id === this.editingTaskId);
       this.tasks[index] = task;
     } else {
-      // Add new task
       this.tasks.push(task);
     }
 
@@ -143,7 +128,6 @@ class TaskManager {
     this.renderManageTasks();
     this.hideTaskForm();
 
-    // Show success message
     alert(this.editingTaskId ? 'Task updated successfully!' : 'Task added successfully!');
   }
 
@@ -195,12 +179,20 @@ class TaskManager {
           </div>
         ` : ''}
         <div class="task-actions">
-          <button class="btn-complete ${task.completed ? 'completed' : ''}" onclick="taskManager.toggleComplete('${task.id}')">
+          <button class="btn-complete ${task.completed ? 'completed' : ''}" data-task-id="${task.id}">
             ${task.completed ? '✓ Completed' : '✓ Complete'}
           </button>
         </div>
       </div>
     `).join('');
+
+    // Attach listeners to complete buttons
+    document.querySelectorAll('.btn-complete').forEach(btn => {
+      const taskId = btn.dataset.taskId;
+      const handler = () => this.toggleComplete(taskId);
+      btn.addEventListener('click', handler);
+      btn.addEventListener('touchstart', handler, { passive: true });
+    });
   }
 
   renderManageTasks() {
@@ -227,11 +219,28 @@ class TaskManager {
           </div>
         </div>
         <div class="manage-task-actions">
-          <button class="btn-edit" onclick="taskManager.editTask('${task.id}')">✏️ Edit</button>
-          <button class="btn-delete" onclick="taskManager.deleteTask('${task.id}')">🗑️ Delete</button>
+          <button class="btn-edit" data-action="edit" data-task-id="${task.id}">✏️ Edit</button>
+          <button class="btn-delete" data-action="delete" data-task-id="${task.id}">🗑️ Delete</button>
         </div>
       </div>
     `).join('');
+
+    // Attach listeners to edit/delete buttons
+    document.querySelectorAll('.manage-task-actions button').forEach(btn => {
+      const taskId = btn.dataset.taskId;
+      const action = btn.dataset.action;
+
+      const handler = () => {
+        if (action === 'edit') {
+          this.editTask(taskId);
+        } else if (action === 'delete') {
+          this.deleteTask(taskId);
+        }
+      };
+
+      btn.addEventListener('click', handler);
+      btn.addEventListener('touchstart', handler, { passive: true });
+    });
   }
 
   editTask(taskId) {
@@ -250,7 +259,6 @@ class TaskManager {
         const reminderDate = new Date(task.reminderTime);
         const timeDiff = reminderDate - now;
 
-        // Notify if reminder time is within 1 minute
         if (timeDiff > 0 && timeDiff < 60000) {
           this.showNotification(task);
         }
@@ -277,7 +285,6 @@ class TaskManager {
       }
     }
 
-    // Fallback alert
     alert(`⏰ Reminder: ${task.title}`);
   }
 
@@ -322,7 +329,7 @@ class TaskManager {
 // Initialize the app
 const taskManager = new TaskManager();
 
-// Request notification permission on load
+// Ask for notification permission on load
 if ('Notification' in window && Notification.permission === 'default') {
   Notification.requestPermission();
 }
